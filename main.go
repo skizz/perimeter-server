@@ -8,23 +8,15 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
 type Session struct {
-	Id   int
-	Time int64
-}
-
-var sessions = []Session{
-	Session{Id: 1, Time: 999},
-	Session{Id: 2, Time: 1000},
-}
-
-func allSessions(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(sessions)
+	Id        int
+	CreatedAt time.Time
 }
 
 func createSession(w http.ResponseWriter, r *http.Request) {
@@ -45,32 +37,35 @@ func createSession(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("ID = %d\n", id)
 
-	json.NewEncoder(w).Encode(Session{Id: id, Time: 0})
+	json.NewEncoder(w).Encode(Session{Id: id, CreatedAt: time.Time{}})
 }
 
 func GetSession(w http.ResponseWriter, r *http.Request) {
 
 	dbUrl := "postgres://skizz@localhost:5432/perimeter_development?sslmode=disable"
 	db, err := sql.Open("postgres", dbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
 	vars := mux.Vars(r)
+	print(vars)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var time int64
-	err = db.QueryRow("SELECT id, time FROM sessions WHERE id = ?", id).Scan(&time)
+	var created_at time.Time
+	err = db.QueryRow("SELECT created_at FROM sessions WHERE id = $1", id).Scan(&created_at)
 	if err != nil {
 		log.Fatal(err)
 	}
-	json.NewEncoder(w).Encode(Session{Id: id, Time: time})
+	json.NewEncoder(w).Encode(Session{Id: id, CreatedAt: created_at})
 }
 
 func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.HandleFunc("/sessions", allSessions).Methods("GET")
 	myRouter.HandleFunc("/sessions", createSession).Methods("POST")
-	myRouter.HandleFunc("/sessions/{id}", GetSession).Methods("POST").Name("session")
+	myRouter.HandleFunc("/sessions/{id}", GetSession).Methods("GET").Name("session")
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
 
