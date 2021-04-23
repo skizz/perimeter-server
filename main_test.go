@@ -13,6 +13,7 @@ import (
 var a App
 
 func TestMain(m *testing.M) {
+	a = App{}
 	a.Initialize("perimeter_test")
 
 	ensureTableExists()
