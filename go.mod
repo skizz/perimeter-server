@@ -1,4 +1,4 @@
-module perimeter
+module github.com/skizz/perimeter
 
 go 1.16
 

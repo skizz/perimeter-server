@@ -14,11 +14,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Session struct {
-	Id        int
-	CreatedAt time.Time
-}
-
 func createSession(w http.ResponseWriter, r *http.Request) {
 
 	dbUrl := "postgres://skizz@localhost:5432/perimeter_development?sslmode=disable"
